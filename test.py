@@ -22,6 +22,10 @@ def test_plot_a_firing_map(session_data):
     plot_a_firing_map(session_data)
 
 
+def test_if_multiple_tetrodes_per_cell():
+
+
+
 def test_average_firing_maps():
     pass
 

@@ -3,26 +3,40 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def average_firing_maps(dataframe, animal):
+basic_data = pd.read_pickle("basic_info_included_data/all_mice_df.pkl")
+
+
+def average_firing_maps(dataframe, session_id, tetrode):
     firing_map_size = 39
     average_firing_map = np.zeros((firing_map_size, firing_map_size))
-    animal_count = 0
+    count = 0
     for _, row in dataframe.iterrows():
-        if int(row["session_id"][1:2]) == animal:
-            animal_count += 1
-            firing_map_to_add = row["firing_maps"][
-                0:firing_map_size, 0:firing_map_size
-            ]  # firing maps are slightly different sizes
-            average_firing_map += firing_map_to_add
-    average_firing_map = average_firing_map / animal_count
-    return average_firing_map
+        if row["session_id"] == session_id:
+            if extract_tetrode(row) == tetrode:
+                count += 1
+                firing_map_to_add = row["firing_maps"][
+                    0:firing_map_size, 0:firing_map_size
+                ]  # firing maps are slightly different sizes
+                average_firing_map += firing_map_to_add
+    if count == 0:
+        return None
+    average_firing_map = average_firing_map / count
+    return average_firing_map, count, tetrode
 
 
-def plot_average_firing_map(dataframe, animal):
-    average_firing_map = average_firing_maps(dataframe, animal)
-    plt.imshow(average_firing_map)
-    plt.savefig(f"average_firing_map_{animal}.png")
-    plt.close()
+def plot_average_firing_map(dataframe, session_id, tetrode):
+    average_firing_map = average_firing_maps(dataframe, session_id, tetrode)
+    if average_firing_map == None:
+        return
+    else:
+        average_firing_map, count, tetrode = average_firing_maps(
+            dataframe, session_id, tetrode
+        )
+        plt.imshow(average_firing_map)
+        plt.savefig(
+            f"average_firing_map_tetrode_{tetrode}_cells_{count}_session_id_{session_id}.png"
+        )
+        plt.close()
 
 
 def compute_firing_map_bias():
@@ -35,12 +49,33 @@ def plot_a_firing_map(session_data):
     plt.close()
 
 
+def get_session_ids(df):
+    session_ids = df["session_id"]
+    unique_session_ids = set(session_ids)
+    return unique_session_ids
+
+
+def get_all_tetrodes():
+    return set(basic_data["tetrode"])
+
+
+def extract_tetrode(row):
+    for basic_row in basic_data.iterrows():
+        if (basic_row[1]["session_id"], basic_row[1]["cluster_id"]) == (
+            row["session_id"],
+            row["cluster_id"],
+        ):
+            return basic_row[1]["tetrode"]
+
+
 def main():
     data_path = "SORTED_CLUSTERS/sorted_clusters.pkl"
     df = pd.read_pickle(data_path)
-    animals = range(10)
-    for animal in animals:
-        plot_average_firing_map(df, animal)
+    session_ids = get_session_ids(df)
+    for session_id in session_ids:
+        tetrodes = get_all_tetrodes()
+        for tetrode in tetrodes:
+            plot_average_firing_map(df, session_id, tetrode)
 
 
 if __name__ == "__main__":
