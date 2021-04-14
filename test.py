@@ -16,14 +16,14 @@ def session_data(all_data):
     return session_data
 
 
-def test_plot_a_firing_map(session_data):
-    from average_rate_maps import plot_a_firing_map
+def test_if_multiple_tetrodes_per_session():
+    import glob
 
-    plot_a_firing_map(session_data)
-
-
-def test_if_multiple_tetrodes_per_cell():
-
+    sessions = glob.glob("*.png")
+    sessions = [i.split("session_id")[1][:-4] for i in sessions]
+    num_of_sessions_total = len(sessions)
+    unique_sessions = set(sessions)
+    assert unique_sessions != num_of_sessions_total
 
 
 def test_average_firing_maps():

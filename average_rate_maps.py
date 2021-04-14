@@ -17,6 +17,7 @@ def average_firing_maps(dataframe, session_id, tetrode):
                 firing_map_to_add = row["firing_maps"][
                     0:firing_map_size, 0:firing_map_size
                 ]  # firing maps are slightly different sizes
+                firing_map_to_add /= row["firing_maps"].max()
                 average_firing_map += firing_map_to_add
     if count == 0:
         return None
@@ -34,7 +35,7 @@ def plot_average_firing_map(dataframe, session_id, tetrode):
         )
         plt.imshow(average_firing_map)
         plt.savefig(
-            f"average_firing_map_tetrode_{tetrode}_cells_{count}_session_id_{session_id}.png"
+            f"normalised/average_firing_map_tetrode_{tetrode}_cells_{count}_session_id_{session_id}.png"
         )
         plt.close()
 
