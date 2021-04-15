@@ -1,8 +1,10 @@
 import numpy as np
 from scipy.stats import wasserstein_distance
+import glob
+import matplotlib.pyplot as plt
 
 
-def sliced_wasserstein(X, Y, num_proj=1e6):
+def sliced_wasserstein(X, Y, num_proj=int(1e3)):
     """
     https://stats.stackexchange.com/a/404915
     """
@@ -10,22 +12,75 @@ def sliced_wasserstein(X, Y, num_proj=1e6):
     ests = []
     for _ in range(num_proj):
         # sample uniformly from the unit sphere
-        dir = np.random.rand(dim)
-        dir /= np.linalg.norm(dir)
+        direction = np.random.rand(dim)
+        direction /= np.linalg.norm(direction)
 
         # project the data
-        X_proj = X @ dir
-        Y_proj = Y @ dir
+        X_proj = X @ direction
+        Y_proj = Y @ direction
 
         # compute 1d wasserstein
         ests.append(wasserstein_distance(X_proj, Y_proj))
     return np.mean(ests)
 
 
-example_rate_map = "normalised/average_firing_map_tetrode_4_cells_4_session_id_M11_2018-03-12_17-58-58_of.npy"
-rate_map = np.load(example_rate_map)
+def simulate_border_cells():
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from scipy.ndimage import gaussian_filter
 
-another_rate_map = "normalised/average_firing_map_tetrode_4_cells_2_session_id_M15_2018-05-19_13-26-11_of.npy"
-another_rate_map = np.load(another_rate_map)
-print("distance to self", sliced_wasserstein(another_rate_map, another_rate_map, 1000))
-print("distance to other map", sliced_wasserstein(rate_map, another_rate_map, 1000))
+    cells = []
+
+    firing = np.zeros((39, 39))
+    firing[34:39, :] = 1
+    firing /= np.sum(firing)
+
+    cells.append(firing)
+
+    firing = np.zeros((39, 39))
+    firing[0:5, :] = 1
+    firing /= np.sum(firing)
+
+    cells.append(firing)
+
+    firing = np.zeros((39, 39))
+    firing[:, 34:39] = 1
+    firing /= np.sum(firing)
+
+    cells.append(firing)
+
+    firing = np.zeros((39, 39))
+    firing[:, 0:5] = 1
+    firing /= np.sum(firing)
+
+    cells.append(firing)
+    return cells
+
+
+firing_maps = glob.glob("normalised/*.npy")
+simulated_cells = simulate_border_cells()
+most_border_cell = None
+min_distance = 1e8
+previous_border_cells = []
+previous_distances = []
+for a_firing_map in firing_maps:
+    a_firing_map = np.load(a_firing_map)
+    a_firing_map /= np.sum(a_firing_map)
+    current_min_distance = 1e8
+    for i in range(4):
+        distance = sliced_wasserstein(a_firing_map, simulated_cells[i])
+        if distance < current_min_distance:
+            current_min_distance = distance
+    distance = current_min_distance
+    if distance < min_distance:
+        most_border_cell = a_firing_map
+        previous_border_cells.append(a_firing_map)
+        min_distance = distance
+        previous_distances.append(distance)
+
+for i, border_cells in enumerate(previous_border_cells):
+    plt.imshow(border_cells)
+    distance = previous_distances[i]
+    plt.title(f"distance {distance}")
+    plt.savefig(f"border_cell_{i}.png")
+    plt.close()
