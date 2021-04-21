@@ -25,10 +25,10 @@ for sess_i = 1:length(sessions)
     
     xdim = xmax - xmin; ydim = ymax - ymin;
     % Could set an equal area mask
-%     inner_dim = ceil(sqrt((xdim*ydim)/2)/bin_size);
+    inner_dim = ceil(sqrt((xdim*ydim)/2)/bin_size);
 
     % or an equal width mask
-    inner_dim = ceil(mean([xdim/2,ydim/2])/bin_size);
+%     inner_dim = ceil(mean([xdim/2,ydim/2])/bin_size);
 
     edges{1} = xmin:bin_size:xmax;
     edges{2} = ymin:bin_size:ymax;
@@ -65,7 +65,7 @@ for sess_i = 1:length(sessions)
 end
 
 % add some selection criteria here if desired i.e. gridness scores
-crit = gridness > 0.3;
+crit = gridness > 0.8;
 crit_inner = inner;%(crit);
 crit_outer = outer;%(crit);
 
@@ -76,3 +76,5 @@ errorbar([1,2],[nanmean(crit_inner),nanmean(crit_outer)], [std(crit_inner),std(c
 xticks([1,2])
 xticklabels({'inner', 'outer'})
 ylabel('avg firing rate')
+xlabel('subsection of grid cell ratemap (equal area)')
+saveas(gcf,'figures/boundary_coding.png')

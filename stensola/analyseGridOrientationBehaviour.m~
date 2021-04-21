@@ -13,7 +13,7 @@ orientations = [];
 gridness = [];
 scale = [];
 biases = [];
-gridness_threshold = 0.8;
+gridness_threshold = 0.3;
 
 
 for sess_i = 1:length(sessions)
@@ -21,8 +21,8 @@ for sess_i = 1:length(sessions)
     [posx,posy,post, unitList, unitData] = readNwb_wdc(sessions(sess_i).name);
     sampleTime = mean(diff(post));
     dist_from_centre = sqrt(posx.^2 + posy.^2);
-%     bias = sum(wrapTo180(diff(atan2d(posy,posx))));
-    bias = sum(dist_from_centre(2:end) .* wrapToPi(deg2rad(diff(atan2d(posy,posx)))));
+    bias = sum(wrapTo180(diff(atan2d(posy,posx))));
+%     bias = sum(dist_from_centre(2:end) .* wrapTo180(diff(atan2d(posy,posx))));
     
     xmin = floor(min(posx)); xmax = ceil(max(posx)); ymin = floor(min(posy)); ymax = ceil(max(posy));
     
@@ -63,7 +63,7 @@ thresholded_biases = biases(gridness > gridness_threshold);
 [num,edge_points] = histcounts(thresholded_orientations,0:3:180);
 figure
 polarplot(deg2rad(1.5:3:360), repmat(num,1,2),'linewidth',2)
-title('Grid orientations')
+title('Grid orienations')
 saveas(gcf,'figures/grid_orientations.png')
 
 % Plot grid shearing
@@ -77,7 +77,7 @@ saveas(gcf,'figures/shearing_histogram.png')
 figure
 scatter(thresholded_biases, thresholded_shears,'k')
 ylabel('shearing / degrees')
-xlabel('rotational bias (resultant arc length from centre / cm)')
+xlabel('rotational bias')
 title(sprintf('r = %.3f', corr(thresholded_biases,thresholded_shears)))
-saveas(gcf,'figures/shearing_bias.png')
+saveas(gcf,'figures/shearing_histogram.png')
 
